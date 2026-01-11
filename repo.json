@@ -18,10 +18,10 @@
       "release_date": "2026-01-11",
       "init_format": "none",
       "devices": ["pi3", "pi4"],
-      "extract_size": 0,
-      "extract_sha256": "",
-      "image_download_size": 0,
-      "image_download_sha256": ""
+      "extract_size": 31266439168,
+      "extract_sha256": "b481ad25efd7347bf79c9a195cb6e1496f24bff9c8e6415ae5f24f495ff49eb7",
+      "image_download_size": 1010781372,
+      "image_download_sha256": "8604551f4e336beee7d0f0389ccafd052cada8da28047452fd1ca06ffcb6cc24"
     },
     {
       "name": "HA Lab (Clean) - 64-bit (Pi 5)",
