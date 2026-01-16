@@ -1,4 +1,18 @@
 {
+  "imager": {
+    "devices": [
+      {
+        "name": "Raspberry Pi 3",
+        "tags": ["pi3"],
+        "default": false
+      },
+      {
+        "name": "Raspberry Pi 4",
+        "tags": ["pi4"],
+        "default": true
+      }
+    ]
+  },
   "os_list": [
     {
       "name": "HA Lab (Clean) – 32-bit (Pi 3 / Pi 4)",
