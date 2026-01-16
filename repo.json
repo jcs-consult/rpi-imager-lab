@@ -1,26 +1,13 @@
 {
-  "imager": {
-    "latest_version": "2.0.0",
-    "url": "https://www.raspberrypi.com/software/",
-    "devices": [
-      { "name": "No filtering", "tags": ["all"], "default": true, "matching_type": "inclusive", "capabilities": [] },
-      { "name": "Raspberry Pi 3 (3B/3B+)", "tags": ["pi3"], "default": false, "matching_type": "exclusive", "capabilities": [] },
-      { "name": "Raspberry Pi 4 (4B/400/CM4)", "tags": ["pi4"], "default": false, "matching_type": "exclusive", "capabilities": [] },
-    ]
-  },
   "os_list": [
     {
-      "name": "HA Lab (Clean) - 32-bit (Pi 3/4)",
-      "description": "RPi OS Lite 32-bit + Docker + HA container. Clean onboarding. First-boot identity script.",
+      "name": "HA Lab (Clean) – 32-bit (Pi 3 / Pi 4)",
+      "description": "Raspberry Pi OS Lite 32-bit with Docker and Home Assistant Container. Clean onboarding.",
       "icon": "https://raw.githubusercontent.com/jcs-consult/rpi-imager-lab/main/icon.png",
       "url": "https://github.com/jcs-consult/rpi-imager-lab/releases/download/v1.1.0/ha-lab-clean-armhf-v1.1.0.img.xz",
-      "release_date": "2026-01-15",
-      "init_format": "none",
       "devices": ["pi3", "pi4"],
-      "extract_size": 31266439168,
-      "extract_sha256": "b481ad25efd7347bf79c9a195cb6e1496f24bff9c8e6415ae5f24f495ff49eb7",
-     "image_download_size": 1869236760,
-     "image_download_sha256": "a900edbef03d8694763af9754c514b53ed03d6428021bec6458bd58cbdf2a276",
+      "image_download_size": 1869236760,
+      "image_download_sha256": "a900edbef03d8694763af9754c514b53ed03d6428021bec6458bd58cbdf2a276"
     }
   ]
 }
