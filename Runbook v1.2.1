@@ -1,0 +1,272 @@
+# HA Lab Image — Build & Release Runbook (Option A)
+**Release line:** v1.2.1  
+**Target hardware:** Raspberry Pi 4 only (64-bit / aarch64)  
+**Distribution:** Raspberry Pi Imager 2.0.3 via custom `repo.json`  
+**Architecture:** Image contains **Pi OS Lite + Docker only**. Home Assistant is **pulled and started on first boot** by a systemd unit.
+
+---
+
+## What changed in v1.2.1
+- Fix: `ha-bootstrap.sh` now terminates with `exit 0` (prevents systemd oneshot failure status).
+- Bluetooth: HA container is started with `--privileged` and `/run/dbus` bind mount to avoid missing NET_ADMIN/NET_RAW + DBus errors in typical lab environments.
+
+---
+
+## Progress tracker (tick as you go)
+- [ ] A. Update bootstrap script on Golden Pi
+- [ ] B. Validate onboarding loads after reboot
+- [ ] C. Prepare SD for imaging (prune Docker images; clean config)
+- [ ] D. Image SD to `.img` (macOS)
+- [ ] E. Transfer `.img` to Debian (`/big`)
+- [ ] F. PiShrink
+- [ ] G. Compress with xz and confirm `< 2.0 GB`
+- [ ] H. Compute SHA-256 + byte size
+- [ ] I. Publish GitHub Release `v1.2.1`
+- [ ] J. Update `repo.json` to `v1.2.1` + validate in Imager
+
+---
+
+# A) Update bootstrap script on the Golden Pi (v1.2.1)
+
+## A1. SSH into the Golden Pi
+```bash
+ssh jim@<PI_IP>
+```
+
+## A2. Replace `/usr/local/sbin/ha-bootstrap.sh` with the v1.2.1 baseline
+If your Linux username is not `jim`, change only `USER_NAME`.
+
+```bash
+sudo tee /usr/local/sbin/ha-bootstrap.sh >/dev/null <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+USER_NAME="jim"
+CONFIG_DIR="/home/${USER_NAME}/homeassistant"
+CONTAINER_NAME="homeassistant"
+IMAGE="ghcr.io/home-assistant/home-assistant:stable"
+TZ="Europe/Copenhagen"
+
+command -v docker >/dev/null 2>&1 || exit 0
+
+mkdir -p "${CONFIG_DIR}"
+chown -R "${USER_NAME}:${USER_NAME}" "${CONFIG_DIR}"
+
+# Do nothing if container already exists
+if docker ps -a --format '{{.Names}}' | grep -qx "${CONTAINER_NAME}"; then
+  exit 0
+fi
+
+# Pull with basic retry
+for i in 1 2 3 4 5; do
+  if docker pull "${IMAGE}"; then
+    break
+  fi
+  sleep 15
+done
+
+docker run -d   --name "${CONTAINER_NAME}"   --restart=unless-stopped   --network=host   --privileged   -e "TZ=${TZ}"   -v "${CONFIG_DIR}:/config"   -v /run/dbus:/run/dbus:ro   "${IMAGE}"
+
+exit 0
+EOF
+sudo chmod +x /usr/local/sbin/ha-bootstrap.sh
+```
+
+## A3. Confirm systemd unit exists and is enabled
+```bash
+sudo systemctl status ha-bootstrap.service --no-pager || true
+sudo systemctl enable ha-bootstrap.service
+```
+
+## A4. Host prerequisites (Bluetooth + DBus)
+```bash
+sudo apt-get update
+sudo apt-get install -y dbus bluez
+sudo systemctl enable --now bluetooth
+ls -l /run/dbus/system_bus_socket
+```
+
+---
+
+# B) Validate (on the Golden Pi)
+
+## B1. Recreate container using the bootstrap
+```bash
+sudo docker stop homeassistant || true
+sudo docker rm homeassistant || true
+sudo systemctl restart ha-bootstrap.service
+```
+
+## B2. Check service + container
+```bash
+sudo systemctl status ha-bootstrap.service --no-pager
+docker ps --filter name=homeassistant
+docker logs --tail=120 homeassistant
+```
+
+## B3. Confirm onboarding
+From a Mac browser:
+- `http://<PI_IP>:8123`
+
+**Do not create a Home Assistant user** on the golden build (keeps clean onboarding).
+
+---
+
+# C) Prepare SD for imaging (CRITICAL for <2GB)
+
+## C1. Stop and remove container
+```bash
+sudo docker stop homeassistant || true
+sudo docker rm homeassistant || true
+```
+
+## C2. Remove all Docker images and cache (must be empty)
+```bash
+sudo docker system prune -a -f
+sudo docker images
+```
+Expected: no rows.
+
+## C3. Clean HA config directory (keep empty)
+```bash
+sudo rm -rf /home/jim/homeassistant
+sudo mkdir -p /home/jim/homeassistant
+sudo chown -R jim:jim /home/jim/homeassistant
+```
+
+## C4. Optional trim
+```bash
+sudo fstrim -av || true
+```
+
+## C5. Shutdown
+```bash
+sudo shutdown -h now
+```
+Remove the SD card.
+
+---
+
+# D) Image SD to `.img` (macOS)
+
+## D1. Identify SD device
+```bash
+diskutil list
+```diskutil list
+Find `/dev/diskX`.
+
+## D2. Unmount (do not eject)
+```bash
+diskutil unmountDisk /dev/diskX
+```
+
+## D3. Create image
+```bash
+mkdir -p ~/ha-lab-build
+cd ~/ha-lab-build
+sudo dd if=/dev/rdiskX of=ha-lab-clean-aarch64-v1.2.1.img bs=4m status=progress
+sync
+ls -lh ha-lab-clean-aarch64-v1.2.1.img
+```
+
+---
+
+# E) Transfer `.img` to Debian `/big`
+On Debian, confirm space:
+```bash
+df -h /big
+```
+
+From macOS:
+```bash
+scp ~/ha-lab-build/ha-lab-clean-aarch64-v1.2.1.img jim@<DEBIAN_IP>:/big/
+
+```
+
+On Debian:
+```bash
+ls -lh /big/ha-lab-clean-aarch64-v1.2.1.img
+```
+
+---
+
+# F) PiShrink (Debian)
+```bash
+cd /big
+sudo ~/pishrink.sh ha-lab-clean-aarch64-v1.2.1.img
+ls -lh ha-lab-clean-aarch64-v1.2.1.img
+```
+
+---
+
+# G) Compress with xz (Debian)
+Use `-T1` to avoid memory warnings.
+```bash
+xz -9e -T1 ha-lab-clean-aarch64-v1.2.1.img
+ls -lh ha-lab-clean-aarch64-v1.2.1.img.xz
+xz -t ha-lab-clean-aarch64-v1.2.1.img.xz
+```
+
+**Gate:** file must be `< 2.0 GB` or GitHub will reject it.
+
+---
+
+# H) Generate metadata
+On Debian:
+```bash
+sha256sum ha-lab-clean-aarch64-v1.2.1.img.xz
+stat -c '%s' ha-lab-clean-aarch64-v1.2.1.img.xz
+```
+Record:
+- `image_download_sha256`
+- `image_download_size` (bytes)
+
+(Optional) copy to Mac:
+```bash
+scp jim@<DEBIAN_IP>:/big/ha-lab-clean-aarch64-v1.2.1.img.xz ~/pishrink/
+```
+
+---
+
+# I) Publish GitHub Release (GUI)
+1. Repo → Releases → Draft new release
+2. Tag: `v1.2.1`
+3. Title: `v1.2.1 – HA Lab Clean (Pi 4 64-bit, first-boot pull)`
+4. Upload: `ha-lab-clean-aarch64-v1.2.1.img.xz`
+5. Publish
+
+Asset URL must be:
+```
+https://github.com/jcs-consult/rpi-imager-lab/releases/download/v1.2.1/ha-lab-clean-aarch64-v1.2.1.img.xz
+```
+
+---
+
+# J) Update `repo.json` (and validate in Imager)
+
+## J1. Update the OS entry fields
+- Update `url` to the v1.2.1 asset URL
+- Update `image_download_size`
+- Update `image_download_sha256`
+- Optionally update `release_date`
+
+## J2. Confirm raw JSON is valid
+```bash
+curl -s https://raw.githubusercontent.com/jcs-consult/rpi-imager-lab/main/repo.json | jq .
+```
+
+## J3. Validate in Raspberry Pi Imager 2.0.3 (macOS)
+1. Imager → ⚙ App Options → Content repository:
+   - `https://raw.githubusercontent.com/jcs-consult/rpi-imager-lab/main/repo.json`
+2. Apply & Restart (confirm banner: “Using data from raw.githubusercontent.com”)
+3. Choose Device: Pi 4
+4. Choose OS: HA Lab entry
+5. Write SD and boot test
+6. Confirm onboarding: `http://<PI_IP>:8123`
+
+---
+
+## Definition of done
+- Release `v1.2.1` published with a single `.img.xz` asset < 2 GB
+- `repo.json` points to v1.2.1 and Imager lists the OS
+- Fresh flashed SD boots and shows onboarding
