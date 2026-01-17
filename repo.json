@@ -11,10 +11,10 @@
       "name": "HA Lab (Clean) – 64-bit (Pi 4)",
       "description": "Pi OS Lite 64-bit + Docker. Home Assistant is pulled and started on first boot. Clean onboarding.",
       "icon": "https://raw.githubusercontent.com/jcs-consult/rpi-imager-lab/main/icon.png",
-      "url": "https://github.com/jcs-consult/rpi-imager-lab/releases/download/v1.2.0/ha-lab-clean-aarch64-v1.2.0.img.xz",
+      "url": "https://github.com/jcs-consult/rpi-imager-lab/releases/download/v1.2.1/ha-lab-clean-aarch64-v1.2.1.img.xz",
       "devices": ["pi4"],
-      "image_download_size": 693381952,
-      "image_download_sha256": "5d7b6642bd6ea61ef02c67743a229593f1e252ab1ec0e428e19dcf74800ff4dc"
+      "image_download_size": 781365568,
+      "image_download_sha256": "675fd3dfb2590248ab1dbcccab262635c297e98a614e68a1723c976b9257fa20"
     }
   ]
 }
