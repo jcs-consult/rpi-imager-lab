@@ -1,4 +1,17 @@
 {
+  "imager": {
+    "latest_version": "2.0.3",
+    "url": "https://www.raspberrypi.com/software/",
+    "devices": [
+      {
+        "name": "Raspberry Pi 4",
+        "tags": ["pi4"],
+        "default": true
+      }
+    ]
+  },
+  "os_list": [
+  {
   "name": "HA Lab (Clean) – 64-bit (Pi 4)",
   "description": "Pi OS Lite 64-bit + Docker. Home Assistant starts on first boot. Clean onboarding. Auto-hostname.",
   "icon": "https://raw.githubusercontent.com/jcs-consult/rpi-imager-lab/main/icon.png",
@@ -6,4 +19,6 @@
   "devices": ["pi4"],
   "image_download_size": 673912100,
   "image_download_sha256": "332aad98284f3e538c44c6b55d19dc809a2911293a918037b1120211b288dfa2"
+  }
+  ]
 }
