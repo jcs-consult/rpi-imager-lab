@@ -17,8 +17,8 @@
   "icon": "https://raw.githubusercontent.com/jcs-consult/rpi-imager-lab/main/icon.png",
   "url": "https://github.com/jcs-consult/rpi-imager-lab/releases/download/v1.2.2/ha-lab-clean-aarch64-v1.2.2.img.xz",
   "devices": ["pi4"],
-  "image_download_size": 673912100,
-  "image_download_sha256": "332aad98284f3e538c44c6b55d19dc809a2911293a918037b1120211b288dfa2"
+  "image_download_size": 1880741200,
+  "image_download_sha256": "ffeda6424aac943ad69d11fb62c40f07e83b8d57ba168f3a2a4e9c473187735e"
   }
   ]
 }
